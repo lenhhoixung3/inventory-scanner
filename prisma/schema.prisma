@@ -1,0 +1,38 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  pin       String   // Mã PIN 4-6 số (hash trong thực tế)
+  role      String   @default("VIEWER") // ADMIN | MANAGER | VIEWER
+  createdAt DateTime @default(now())
+}
+
+model Product {
+  id           String        @id @default(cuid())
+  name         String
+  barcode      String        @unique
+  price        Float         @default(0)
+  unit         String        @default("cái")
+  stock        Int           @default(0)
+  transactions Transaction[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+}
+
+model Transaction {
+  id        String   @id @default(cuid())
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  type      String   // "IN" (Nhập) hoặc "OUT" (Xuất)
+  quantity  Int
+  note      String?
+  createdAt DateTime @default(now())
+}
