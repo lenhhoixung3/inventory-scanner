@@ -17,7 +17,8 @@ export default function NewProductPage() {
     barcode: '',
     price: '',
     unit: 'cái',
-    stock: '0'
+    stock: '0',
+    allowDuplicate: false
   })
 
   async function handleSubmit(e: React.FormEvent) {
@@ -28,7 +29,8 @@ export default function NewProductPage() {
       await createProduct({
         ...formData,
         price: Number(formData.price),
-        stock: Number(formData.stock)
+        stock: Number(formData.stock),
+        allowDuplicate: formData.allowDuplicate
       })
       router.push('/products')
       router.refresh()
@@ -114,16 +116,29 @@ export default function NewProductPage() {
         </div>
 
         {/* Tồn kho đầu kỳ */}
-        <div>
-          <label className="block mb-1 text-sm font-medium text-gray-700">Tồn kho ban đầu</label>
-          <input 
-            type="number" 
-            min="0"
-            className="w-full px-4 py-3 text-sm bg-white border border-gray-200 rounded-xl focus:border-blue-500 outline-none"
-            placeholder="Số lượng"
-            value={formData.stock}
-            onChange={e => setFormData(f => ({...f, stock: e.target.value}))}
-          />
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block mb-1 text-sm font-medium text-gray-700">Tồn kho ban đầu</label>
+            <input 
+              type="number" 
+              min="0"
+              className="w-full px-4 py-3 text-sm bg-white border border-gray-200 rounded-xl focus:border-blue-500 outline-none"
+              placeholder="0"
+              value={formData.stock}
+              onChange={e => setFormData(f => ({...f, stock: e.target.value}))}
+            />
+          </div>
+          <div className="flex flex-col justify-end pb-1">
+             <label className="flex items-center gap-2 cursor-pointer select-none">
+                <input 
+                  type="checkbox"
+                  className="w-5 h-5 rounded-lg border-gray-300 text-blue-600 focus:ring-blue-500"
+                  checked={formData.allowDuplicate}
+                  onChange={e => setFormData(f => ({...f, allowDuplicate: e.target.checked}))}
+                />
+                <span className="text-sm font-medium text-gray-700">Cho phép trùng mã</span>
+             </label>
+          </div>
         </div>
 
         <button 

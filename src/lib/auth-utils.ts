@@ -11,9 +11,9 @@ export function canEditProducts(role: Role): boolean {
 }
 
 export function canDeleteProducts(role: Role): boolean {
-  return role === 'ADMIN'
+  return role === 'ADMIN' // Chỉ Admin mới có thể xóa sản phẩm
 }
 
 export function canManageUsers(role: Role): boolean {
-  return role === 'ADMIN'
+  return role === 'ADMIN' // Chỉ Admin mới được quyền quản lý User (Duyệt/Xóa)
 }

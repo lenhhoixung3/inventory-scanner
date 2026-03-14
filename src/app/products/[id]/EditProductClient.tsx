@@ -11,6 +11,7 @@ interface Product {
   price: number
   unit: string
   stock: number
+  allowDuplicate: boolean
 }
 
 export default function EditProductClient({ product }: { product: Product }) {
@@ -20,6 +21,7 @@ export default function EditProductClient({ product }: { product: Product }) {
     barcode: product.barcode,
     price: String(product.price),
     unit: product.unit,
+    allowDuplicate: product.allowDuplicate
   })
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
@@ -38,6 +40,7 @@ export default function EditProductClient({ product }: { product: Product }) {
         barcode: form.barcode.trim(),
         price: parseFloat(form.price) || 0,
         unit: form.unit.trim(),
+        allowDuplicate: form.allowDuplicate
       })
       setSuccess('Đã lưu thành công!')
       setTimeout(() => router.push('/products'), 1000)
@@ -113,6 +116,19 @@ export default function EditProductClient({ product }: { product: Product }) {
               className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
+        </div>
+
+        <div className="flex items-center gap-2 p-4 bg-gray-50 rounded-xl border border-gray-100">
+           <input 
+              type="checkbox"
+              id="allowDuplicate"
+              className="w-5 h-5 rounded-lg border-gray-300 text-blue-600 focus:ring-blue-500"
+              checked={form.allowDuplicate}
+              onChange={e => setForm({...form, allowDuplicate: e.target.checked})}
+           />
+           <label htmlFor="allowDuplicate" className="text-sm font-semibold text-gray-700 cursor-pointer">
+              Cho phép trùng mã vạch
+           </label>
         </div>
 
         <div className="bg-blue-50 rounded-xl p-3 text-sm text-blue-700">

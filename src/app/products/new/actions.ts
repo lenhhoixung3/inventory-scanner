@@ -28,14 +28,27 @@ export async function createProduct(data: {
   price: number
   unit: string
   stock: number
+  allowDuplicate?: boolean
 }) {
-  // Kiểm tra cài đặt khóa trùng barcode
-  const lockSetting = await prisma.systemSetting.findUnique({ where: { key: 'lockDuplicateBarcode' } })
-  const isLocked = lockSetting?.value === 'true'
+  // Logic kiểm tra trùng: 
+  // Chặn nếu: (SP mới không cho phép trùng) HOẶC (Tìm thấy ít nhất 1 SP cùng mã không cho phép trùng)
+  const isDuplicateAllowedForNew = data.allowDuplicate ?? false
 
-  if (isLocked) {
-    const existing = await prisma.product.findFirst({ where: { barcode: data.barcode } })
-    if (existing) throw new Error('CẢNH BÁO: Mã vạch này đã tồn tại! Hệ thống đang ở chế độ KHÓA TRÙNG.')
+  const conflictingProduct = await prisma.product.findFirst({
+    where: { 
+      barcode: data.barcode,
+      OR: [
+        { allowDuplicate: false }, // Có sản phẩm cũ không cho trùng
+      ]
+    }
+  })
+
+  if (!isDuplicateAllowedForNew && conflictingProduct) {
+    throw new Error('Mã vạch này đã tồn tại và không được phép trùng lặp.')
+  }
+  
+  if (isDuplicateAllowedForNew && conflictingProduct && !conflictingProduct.allowDuplicate) {
+    throw new Error(`Sản phẩm '${conflictingProduct.name}' đang dùng mã này và yêu cầu DUY NHẤT. Bạn không thể nhập trùng.`)
   }
 
   const product = await prisma.product.create({ data: {
@@ -44,6 +57,7 @@ export async function createProduct(data: {
     price: data.price,
     unit: data.unit,
     stock: data.stock,
+    allowDuplicate: isDuplicateAllowedForNew
   }})
 
   if (data.stock > 0) {

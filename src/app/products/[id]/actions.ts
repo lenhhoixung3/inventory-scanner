@@ -10,23 +10,30 @@ export async function updateProduct(id: string, data: {
   barcode: string
   price: number
   unit: string
+  allowDuplicate?: boolean
 }) {
   const user = await getCurrentUser()
   if (!user || !canEditProducts(user.role)) {
     throw new Error('Bạn không có quyền chỉnh sửa sản phẩm.')
   }
 
-  // Kiểm tra cài đặt khóa trùng barcode
-  const lockSetting = await prisma.systemSetting.findUnique({ where: { key: 'lockDuplicateBarcode' } })
-  const isLocked = lockSetting?.value === 'true'
+  const isDuplicateAllowedForNew = data.allowDuplicate ?? false
 
-  if (isLocked) {
-    const existing = await prisma.product.findFirst({
-        where: { barcode: data.barcode, NOT: { id } }
-    })
-    if (existing) {
-        throw new Error('Mã vạch này đã được dùng cho sản phẩm khác. (Chế độ KHÓA TRÙNG đang bật)')
+  const conflictingProduct = await prisma.product.findFirst({
+    where: { 
+      barcode: data.barcode,
+      NOT: { id },
+      allowDuplicate: false
     }
+  })
+
+  if (conflictingProduct) {
+     throw new Error(`Mã vạch bị trùng với sản phẩm '${conflictingProduct.name}' (yêu cầu Duy nhất).`)
+  }
+
+  if (!isDuplicateAllowedForNew) {
+      const anyExisting = await prisma.product.findFirst({ where: { barcode: data.barcode, NOT: { id } } })
+      if (anyExisting) throw new Error('Có sản phẩm khác đang dùng mã này. Bạn không thể thiết lập "Duy nhất" cho sản phẩm này.')
   }
 
   const product = await prisma.product.update({
@@ -36,6 +43,7 @@ export async function updateProduct(id: string, data: {
       barcode: data.barcode,
       price: data.price,
       unit: data.unit,
+      allowDuplicate: isDuplicateAllowedForNew
     }
   })
 
