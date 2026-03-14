@@ -38,7 +38,8 @@ export async function getCurrentUser(): Promise<SessionUser | null> {
       canDeleteProducts: user.canDeleteProducts,
       canManageUsers: user.canManageUsers
     }
-  } catch {
+  } catch (error) {
+    console.error('Error in getCurrentUser:', error)
     return null
   }
 }
