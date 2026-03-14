@@ -13,7 +13,7 @@ export default async function ProductsPage() {
     getCurrentUser(),
   ])
 
-  const canEdit = user && canEditProducts(user.role)
+  const canEdit = user && canEditProducts(user)
 
   return (
     <div className="p-4 space-y-6 pb-20">

@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { updateProduct, deleteProduct } from './actions'
-import { canDeleteProducts, Role } from '@/lib/auth-utils'
+import { canDeleteProducts, SessionUser } from '@/lib/auth-utils'
 
 interface Product {
   id: string
@@ -15,7 +15,7 @@ interface Product {
   allowDuplicate: boolean
 }
 
-export default function EditProductClient({ product, currentRole }: { product: Product, currentRole: Role }) {
+export default function EditProductClient({ product, currentUser }: { product: Product, currentUser: SessionUser }) {
   const router = useRouter()
   const [form, setForm] = useState({
     name: product.name,
@@ -149,7 +149,7 @@ export default function EditProductClient({ product, currentRole }: { product: P
       </form>
 
       {/* Xóa sản phẩm (ADMIN only) */}
-      {canDeleteProducts(currentRole) && (
+      {canDeleteProducts(currentUser) && (
         <div className="mt-8 pt-6 border-t border-gray-100">
             <p className="text-xs text-gray-400 mb-3 uppercase tracking-wide">Vùng nguy hiểm</p>
             {!showDeleteConfirm ? (

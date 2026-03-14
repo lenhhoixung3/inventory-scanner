@@ -1,22 +1,7 @@
 import { cookies } from 'next/headers'
 import prisma from '@/lib/prisma'
 
-export type Role = 'ADMIN' | 'MANAGER' | 'VIEWER'
-export type UserStatus = 'PENDING' | 'APPROVED'
-
-export interface SessionUser {
-  id: string
-  name: string
-  email: string
-  role: Role
-  status: UserStatus
-  // Quyền hạn chi tiết
-  canInbound: boolean
-  canOutbound: boolean
-  canManageProducts: boolean
-  canDeleteProducts: boolean
-  canManageUsers: boolean
-}
+import { Role, UserStatus, SessionUser } from './auth-utils'
 
 /** Lấy thông tin người dùng hiện tại từ cookie session */
 export async function getCurrentUser(): Promise<SessionUser | null> {

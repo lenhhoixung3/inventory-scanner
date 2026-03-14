@@ -12,7 +12,7 @@ export default async function EditProductPage({ params }: { params: Promise<{ id
     redirect('/login')
   }
 
-  if (!canEditProducts(user.role)) {
+  if (!canEditProducts(user)) {
     return (
       <div className="p-8 text-center">
         <div className="text-5xl mb-4">🚫</div>
@@ -27,5 +27,5 @@ export default async function EditProductPage({ params }: { params: Promise<{ id
   const product = await (prisma as any).product.findUnique({ where: { id } })
   if (!product) notFound()
 
-  return <EditProductClient product={product} currentRole={user.role} />
+  return <EditProductClient product={product} currentUser={user} />
 }
