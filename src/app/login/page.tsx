@@ -2,97 +2,99 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { loginWithPin } from '@/lib/auth-actions'
+import { login } from '@/lib/auth-actions'
+import Link from 'next/link'
+import { LogIn, Mail, Lock, AlertCircle } from 'lucide-react'
 
 export default function LoginPage() {
-  const [pin, setPin] = useState('')
-  const [error, setError] = useState('')
+  const [formData, setFormData] = useState({ email: '', password: '' })
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
   const router = useRouter()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
     setError('')
-    try {
-      const result = await loginWithPin(pin)
-      if (result.success) {
-        router.push('/')
-        router.refresh()
-      } else {
-        setError(result.error || 'Sai mã PIN.')
-      }
-    } catch {
-      setError('Đã có lỗi xảy ra.')
-    } finally {
+
+    const res = await login(formData.email, formData.password)
+    if (res.success) {
+      router.push('/products')
+      router.refresh()
+    } else {
+      setError(res.error || 'Email hoặc mật khẩu không đúng.')
       setLoading(false)
     }
   }
 
-  const handleDigit = (d: string) => {
-    if (pin.length < 6) setPin((p) => p + d)
-  }
-
-  const handleDelete = () => setPin((p) => p.slice(0, -1))
-
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
-      <div className="w-full max-w-xs bg-white rounded-3xl shadow-xl p-8">
-        <div className="text-center mb-8">
-          <div className="text-4xl mb-3">🔐</div>
-          <h1 className="text-2xl font-bold text-gray-900">Đăng nhập</h1>
-          <p className="text-sm text-gray-500 mt-1">Hệ thống Quản lý Kho</p>
+    <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4">
+      <div className="bg-white p-8 rounded-2xl shadow-xl max-w-md w-full">
+        <div className="flex flex-col items-center mb-8">
+          <div className="w-16 h-16 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center mb-4 rotate-3 shadow-lg">
+            <LogIn size={32} />
+          </div>
+          <h1 className="text-2xl font-bold text-slate-900">WMS Login</h1>
+          <p className="text-slate-500 text-sm">Hệ thống Quản lý Kho Thông Minh</p>
         </div>
 
-        <form onSubmit={handleSubmit}>
-          {/* PIN display */}
-          <div className="flex justify-center items-center gap-3 mb-6">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <div
-                key={i}
-                className={`w-10 h-10 rounded-full border-2 flex items-center justify-center transition-all ${
-                  i < pin.length
-                    ? 'bg-blue-600 border-blue-600'
-                    : 'border-gray-300 bg-gray-50'
-                }`}
-              >
-                {i < pin.length && <div className="w-3 h-3 rounded-full bg-white" />}
-              </div>
-            ))}
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Email</label>
+            <div className="relative">
+              <Mail className="absolute left-3 top-3 text-slate-400" size={20} />
+              <input
+                required
+                type="email"
+                placeholder="admin@wms.com"
+                className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition text-slate-900"
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Mật khẩu</label>
+            <div className="relative">
+              <Lock className="absolute left-3 top-3 text-slate-400" size={20} />
+              <input
+                required
+                type="password"
+                placeholder="••••••••"
+                className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition text-slate-900"
+                value={formData.password}
+                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+              />
+            </div>
           </div>
 
           {error && (
-            <p className="text-red-500 text-sm text-center mb-4">{error}</p>
+            <div className="p-3 bg-red-50 text-red-600 rounded-lg text-sm border border-red-100 flex items-start">
+              <AlertCircle size={18} className="mr-2 mt-0.5 flex-shrink-0" />
+              <span>{error}</span>
+            </div>
           )}
-
-          {/* Number pad */}
-          <div className="grid grid-cols-3 gap-3 mb-6">
-            {['1','2','3','4','5','6','7','8','9','','0','⌫'].map((d, i) => (
-              <button
-                key={i}
-                type={d === '' ? 'button' : 'button'}
-                onClick={() => d === '⌫' ? handleDelete() : d !== '' ? handleDigit(d) : null}
-                disabled={d === ''}
-                className={`h-14 rounded-2xl text-xl font-semibold transition-all active:scale-90 ${
-                  d === '⌫'
-                    ? 'bg-red-50 text-red-500'
-                    : d === ''
-                    ? 'opacity-0 pointer-events-none'
-                    : 'bg-gray-100 text-gray-900 hover:bg-gray-200'
-                }`}
-              >
-                {d}
-              </button>
-            ))}
-          </div>
 
           <button
             type="submit"
-            disabled={pin.length < 4 || loading}
-            className="w-full py-4 rounded-2xl bg-blue-600 text-white font-bold text-base transition-all active:scale-95 disabled:opacity-40"
+            disabled={loading}
+            className="w-full py-3 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-blue-200"
           >
-            {loading ? 'Đang kiểm tra...' : 'Đăng nhập'}
+            {loading ? 'Đang xác thực...' : 'Đăng nhập'}
           </button>
+
+          <div className="flex flex-col space-y-3 mt-6">
+            <p className="text-center text-slate-500 text-sm">
+              Chưa có tài khoản?{' '}
+              <Link href="/register" className="text-blue-600 font-medium hover:underline">
+                Đăng ký ngay
+              </Link>
+            </p>
+            <div className="text-center">
+              <span className="text-xs text-slate-400 italic">Mặc định: admin@wms.com / admin123</span>
+            </div>
+          </div>
         </form>
       </div>
     </div>

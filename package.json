@@ -1,11 +1,10 @@
 {
-  "name": "inventory-scanner",
+  "name": "tmp-app",
   "version": "0.1.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "prisma generate && next build",
-    "postinstall": "prisma generate",
+    "build": "next build",
     "start": "next start",
     "lint": "eslint"
   },
