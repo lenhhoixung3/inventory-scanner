@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, FormEvent } from 'react'
 import { useRouter } from 'next/navigation'
 import { updateProduct, deleteProduct } from './actions'
 import { canDeleteProducts, SessionUser } from '@/lib/auth-utils'
@@ -30,7 +30,7 @@ export default function EditProductClient({ product, currentUser }: { product: P
   const [deleting, setDeleting] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
 
-  const handleSave = async (e: React.FormEvent) => {
+  const handleSave = async (e: FormEvent) => {
     e.preventDefault()
     setSaving(true)
     setError('')
