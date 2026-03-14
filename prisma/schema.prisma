@@ -4,8 +4,8 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
+  url = env("POSTGRES_PRISMA_URL")
+  directUrl = env("POSTGRES_URL_NON_POOLING")
 }
 
 model User {
@@ -39,7 +39,7 @@ model Product {
 }
 
 model Transaction {
-  id        String   @id @default(cuid())
+  id        String   @id @id @default(cuid())
   productId String
   product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
   type      String   // "IN" (Nhập) hoặc "OUT" (Xuất)

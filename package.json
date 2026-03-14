@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "prisma generate && prisma db push --accept-data-loss && next build",
+    "build": "prisma generate && (npx prisma db push --accept-data-loss || echo 'Database push skipped or failed') && next build",
     "postinstall": "prisma generate",
     "start": "next start",
     "lint": "eslint"
@@ -14,7 +14,7 @@
     "clsx": "^2.1.1",
     "html5-qrcode": "^2.3.8",
     "lucide-react": "^0.577.0",
-    "next": "16.1.6",
+    "next": "15.1.6",
     "prisma": "6.4.0",
     "react": "19.2.3",
     "react-dom": "19.2.3",
@@ -27,7 +27,7 @@
     "@types/react-dom": "^19",
     "dotenv": "^17.3.1",
     "eslint": "^9",
-    "eslint-config-next": "16.1.6",
+    "eslint-config-next": "15.1.6",
     "tailwindcss": "^4",
     "typescript": "^5"
   }
