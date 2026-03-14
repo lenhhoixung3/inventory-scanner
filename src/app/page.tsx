@@ -1,5 +1,7 @@
 import { getCurrentUser } from '@/lib/auth'
 import { redirect } from 'next/navigation'
+import prisma from '@/lib/prisma'
+import { Package, ArrowUpRight, ArrowDownLeft, TrendingUp } from 'lucide-react'
 
 export default async function Home() {
   const user = await getCurrentUser()
