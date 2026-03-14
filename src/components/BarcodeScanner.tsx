@@ -80,16 +80,23 @@ export function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps) {
     const config: any = {
       fps: 60, // Tốc độ quét cực cao
       qrbox: (viewfinderWidth: number, viewfinderHeight: number) => {
-        // Tối ưu vùng quét rộng hơn để nhạy hơn
-        return { 
-          width: Math.min(viewfinderWidth * 0.8, 400), 
-          height: Math.min(viewfinderHeight * 0.4, 250) 
-        }
+        // Mở rộng vùng quét "Siêu rộng" theo yêu cầu người dùng
+        const width = Math.min(viewfinderWidth * 0.9, 480)
+        const height = Math.min(viewfinderHeight * 0.7, 350)
+        return { width, height }
       },
       aspectRatio: 1.0,
       experimentalFeatures: { useBarCodeDetectorIfSupported: true },
     }
     if (selected.formats) config.formatsToSupport = selected.formats
+
+    // Đảm bảo element 'reader' tồn tại trong DOM trước khi khởi tạo
+    const element = document.getElementById('reader')
+    if (!element) {
+      console.warn('Waiting for reader element...')
+      setTimeout(() => startScanner(formatIdx), 300)
+      return
+    }
 
     const scanner = new Html5Qrcode('reader')
     scannerRef.current = scanner
@@ -109,7 +116,7 @@ export function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps) {
       
       // Kiểm tra Torch
       setTimeout(() => {
-        const video = document.getElementById('reader')?.querySelector('video') as HTMLVideoElement
+        const video = element.querySelector('video') as HTMLVideoElement
         if (video?.srcObject) {
           const stream = video.srcObject as MediaStream
           const [track] = stream.getVideoTracks()
@@ -117,9 +124,10 @@ export function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps) {
           const caps = track.getCapabilities() as any
           setTorchSupported(!!caps?.torch)
         }
-      }, 1500)
+      }, 2000)
     } catch (err: any) {
-      setError('Lỗi Camera. Hãy đảm bảo bạn dùng HTTPS.')
+      console.error('Scanner start error:', err)
+      setError('Lỗi Camera. Đảm bảo dùng HTTPS và cấp quyền.')
       setShowManual(true)
     }
   }, [onScan, playBeep, vibrate])
@@ -130,18 +138,24 @@ export function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps) {
     try {
       await (trackRef.current as any).applyConstraints({ advanced: [{ torch: newState }] })
       setTorchOn(newState)
-    } catch (e) { console.error(e) }
+    } catch (e) { 
+      console.error('Flash failed:', e)
+      setTorchSupported(false) 
+    }
   }
 
   useEffect(() => {
     startScanner(selectedFormatIdx)
     return () => {
-      if (scannerRef.current) scannerRef.current.stop().catch(console.warn)
+      const s = scannerRef.current
+      if (s && s.isScanning) {
+        s.stop().catch(console.warn)
+      }
     }
   }, [])
 
   return (
-    <div className="fixed inset-0 z-[100] flex flex-col bg-slate-950/95 backdrop-blur-md animate-in fade-in transition-all">
+    <div className="fixed inset-0 z-[100] flex flex-col bg-slate-950/98 backdrop-blur-xl animate-in fade-in transition-all">
       {/* Header gọn gàng */}
       <div className="p-4 flex items-center justify-between z-20">
         <button onClick={onClose} className="p-3 bg-white/5 hover:bg-white/10 rounded-2xl active:scale-90 transition">
@@ -153,38 +167,40 @@ export function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps) {
                 MÁY QUÉT NHẠY
             </h2>
             <div className="flex items-center justify-center gap-1">
-                <div className="w-1 h-1 bg-emerald-500 rounded-full animate-pulse" />
-                <p className="text-[10px] text-emerald-400 font-bold uppercase opacity-80">Siêu tốc 60fps</p>
+                <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-ping" />
+                <p className="text-[10px] text-emerald-400 font-bold uppercase tracking-widest opacity-90">60 FPS SENSOR</p>
             </div>
         </div>
         {torchSupported ? (
           <button 
             onClick={toggleTorch}
-            className={`p-3 rounded-2xl transition active:scale-90 ${torchOn ? 'bg-yellow-400 text-black' : 'bg-white/5 text-white'}`}
+            className={`p-3 rounded-2xl transition active:scale-90 shadow-lg ${torchOn ? 'bg-yellow-400 text-black shadow-yellow-500/20' : 'bg-white/5 text-white border border-white/10'}`}
           >
             <Zap size={24} fill={torchOn ? 'currentColor' : 'none'} />
           </button>
         ) : <div className="w-12" />}
       </div>
 
-      {/* Viewfinder tinh gọn */}
+      {/* Viewfinder Siêu rộng */}
       <div className="relative flex-1 flex flex-col items-center justify-center -mt-10">
         <div className="w-full max-w-sm px-6">
-          <div className="relative aspect-square rounded-[2.5rem] overflow-hidden border-2 border-white/5 bg-black shadow-[0_0_50px_rgba(0,0,0,0.5)]">
+          <div className="relative aspect-square rounded-[3rem] overflow-hidden border-2 border-white/10 bg-black shadow-[0_0_80px_rgba(0,0,0,0.8)]">
             <div id="reader" className="w-full h-full scale-110" />
             
-            {/* Overlay tập trung - Không dòng chạy */}
-            <div className="absolute inset-0 pointer-events-none flex items-center justify-center p-8">
-              <div className="relative w-full h-[55%] border-2 border-emerald-500/40 rounded-3xl overflow-hidden shadow-[0_0_0_9999px_rgba(15,23,42,0.7)]">
-                {/* 4 Corners Focus */}
-                <div className="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-emerald-400 rounded-tl-2xl" />
-                <div className="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-emerald-400 rounded-tr-2xl" />
-                <div className="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-emerald-400 rounded-bl-2xl" />
-                <div className="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-emerald-400 rounded-br-2xl" />
+            {/* Overlay tập trung - Cực kỳ nhạy - KHUNG RỘNG */}
+            <div className="absolute inset-0 pointer-events-none flex items-center justify-center p-4">
+              <div className="relative w-full h-[75%] border-2 border-emerald-500/30 rounded-[2.5rem] shadow-[0_0_0_9999px_rgba(15,23,42,0.85)]">
+                {/* 4 Corners Focus - Đậm và Lớn hơn */}
+                <div className="absolute top-0 left-0 w-12 h-12 border-t-4 border-l-4 border-emerald-400 rounded-tl-[2rem] shadow-[0_0_20px_rgba(52,211,153,0.3)]" />
+                <div className="absolute top-0 right-0 w-12 h-12 border-t-4 border-r-4 border-emerald-400 rounded-tr-[2rem] shadow-[0_0_20px_rgba(52,211,153,0.3)]" />
+                <div className="absolute bottom-0 left-0 w-12 h-12 border-b-4 border-l-4 border-emerald-400 rounded-bl-[2rem] shadow-[0_0_20px_rgba(52,211,153,0.3)]" />
+                <div className="absolute bottom-0 right-0 w-12 h-12 border-b-4 border-r-4 border-emerald-400 rounded-br-[2rem] shadow-[0_0_20px_rgba(52,211,153,0.3)]" />
                 
-                {/* Center marker */}
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-4 h-0.5 bg-emerald-400/50" />
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-0.5 h-4 bg-emerald-400/50" />
+                {/* Visual Guide center */}
+                <div className="absolute inset-0 flex items-center justify-center opacity-30">
+                    <div className="w-full h-px bg-emerald-400/50" />
+                    <div className="h-full w-px bg-emerald-400/50 absolute" />
+                </div>
               </div>
             </div>
           </div>
