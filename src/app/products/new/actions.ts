@@ -75,8 +75,8 @@ export async function processTransaction(barcode: string, type: 'IN' | 'OUT', qu
   const user = await getCurrentUser()
   if (!user) throw new Error('Cần đăng nhập.')
   
-  if (type === 'IN' && !canInbound(user)) throw new Error('Bạn không có quyền Nhập kho.')
-  if (type === 'OUT' && !canOutbound(user)) throw new Error('Bạn không có quyền Xuất kho.')
+  if (type === 'IN' && !canInbound(user!)) throw new Error('Bạn không có quyền Nhập kho.')
+  if (type === 'OUT' && !canOutbound(user!)) throw new Error('Bạn không có quyền Xuất kho.')
   // Nếu trùng mã, ưu tiên lấy sản phẩm được cập nhật mới nhất
   const product = await prisma.product.findFirst({ 
     where: { barcode },

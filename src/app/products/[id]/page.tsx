@@ -12,7 +12,7 @@ export default async function EditProductPage({ params }: { params: Promise<{ id
     redirect('/login')
   }
 
-  if (!canEditProducts(user)) {
+  if (!canEditProducts(user!)) {
     return (
       <div className="p-8 text-center">
         <div className="text-5xl mb-4">🚫</div>

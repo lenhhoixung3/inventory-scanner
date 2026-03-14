@@ -13,7 +13,7 @@ export async function updateProduct(id: string, data: {
   allowDuplicate?: boolean
 }) {
   const user = await getCurrentUser()
-  if (!user || !canEditProducts(user)) {
+  if (!user || !canEditProducts(user!)) {
     throw new Error('Bạn không có quyền chỉnh sửa sản phẩm.')
   }
 
@@ -54,7 +54,7 @@ export async function updateProduct(id: string, data: {
 
 export async function deleteProduct(id: string) {
   const user = await getCurrentUser()
-  if (!user || !canDeleteProducts(user)) {
+  if (!user || !canDeleteProducts(user!)) {
     throw new Error('Bạn không có quyền xóa sản phẩm.')
   }
 
