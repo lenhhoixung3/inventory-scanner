@@ -16,12 +16,17 @@ export async function updateProduct(id: string, data: {
     throw new Error('Bạn không có quyền chỉnh sửa sản phẩm.')
   }
 
-  // Kiểm tra barcode trùng với sản phẩm khác
-  const existing = await prisma.product.findFirst({
-    where: { barcode: data.barcode, NOT: { id } }
-  })
-  if (existing) {
-    throw new Error('Mã vạch này đã được dùng cho sản phẩm khác.')
+  // Kiểm tra cài đặt khóa trùng barcode
+  const lockSetting = await prisma.systemSetting.findUnique({ where: { key: 'lockDuplicateBarcode' } })
+  const isLocked = lockSetting?.value === 'true'
+
+  if (isLocked) {
+    const existing = await prisma.product.findFirst({
+        where: { barcode: data.barcode, NOT: { id } }
+    })
+    if (existing) {
+        throw new Error('Mã vạch này đã được dùng cho sản phẩm khác. (Chế độ KHÓA TRÙNG đang bật)')
+    }
   }
 
   const product = await prisma.product.update({

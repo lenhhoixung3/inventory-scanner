@@ -29,8 +29,14 @@ export async function createProduct(data: {
   unit: string
   stock: number
 }) {
-  const existing = await prisma.product.findUnique({ where: { barcode: data.barcode } })
-  if (existing) throw new Error('Sản phẩm với mã vạch này đã tồn tại!')
+  // Kiểm tra cài đặt khóa trùng barcode
+  const lockSetting = await prisma.systemSetting.findUnique({ where: { key: 'lockDuplicateBarcode' } })
+  const isLocked = lockSetting?.value === 'true'
+
+  if (isLocked) {
+    const existing = await prisma.product.findFirst({ where: { barcode: data.barcode } })
+    if (existing) throw new Error('CẢNH BÁO: Mã vạch này đã tồn tại! Hệ thống đang ở chế độ KHÓA TRÙNG.')
+  }
 
   const product = await prisma.product.create({ data: {
     name: data.name,
@@ -52,7 +58,11 @@ export async function createProduct(data: {
 }
 
 export async function processTransaction(barcode: string, type: 'IN' | 'OUT', quantity: number, note: string) {
-  const product = await prisma.product.findUnique({ where: { barcode } })
+  // Nếu trùng mã, ưu tiên lấy sản phẩm được cập nhật mới nhất
+  const product = await prisma.product.findFirst({ 
+    where: { barcode },
+    orderBy: { updatedAt: 'desc' }
+  })
   if (!product) throw new Error('Không tìm thấy sản phẩm với mã vạch này.')
   if (type === 'OUT' && product.stock < quantity) throw new Error(`Kho không đủ hàng. Tồn hiện tại: ${product.stock}`)
 
