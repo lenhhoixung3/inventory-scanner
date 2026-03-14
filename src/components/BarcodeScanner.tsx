@@ -80,9 +80,9 @@ export function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps) {
     const config: any = {
       fps: 60, // Tốc độ quét cực cao
       qrbox: (viewfinderWidth: number, viewfinderHeight: number) => {
-        // Mở rộng vùng quét "Siêu rộng" theo yêu cầu người dùng
-        const width = Math.min(viewfinderWidth * 0.9, 480)
-        const height = Math.min(viewfinderHeight * 0.7, 350)
+        // Mở rộng vùng quét khớp hoàn toàn với UI Overlay (Khung cực rộng)
+        const width = Math.min(viewfinderWidth * 0.9, 450)
+        const height = Math.min(viewfinderHeight * 0.75, 380)
         return { width, height }
       },
       aspectRatio: 1.0,
@@ -156,6 +156,24 @@ export function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps) {
 
   return (
     <div className="fixed inset-0 z-[100] flex flex-col bg-slate-950/98 backdrop-blur-xl animate-in fade-in transition-all">
+      {/* CSS ẩn hoàn toàn UI mặc định của thư viện và thêm hiệu ứng chuẩn */}
+      <style jsx global>{`
+        #reader__dashboard, #reader__status_span, #reader video + div {
+          display: none !important;
+        }
+        #reader {
+          border: none !important;
+        }
+        @keyframes emerald-pulse {
+          0% { box-shadow: 0 0 0 0 rgba(52, 211, 153, 0.4); }
+          70% { box-shadow: 0 0 0 15px rgba(52, 211, 153, 0); }
+          100% { box-shadow: 0 0 0 0 rgba(52, 211, 153, 0); }
+        }
+        .pulse-emerald {
+          animation: emerald-pulse 2s infinite;
+        }
+      `}</style>
+
       {/* Header gọn gàng */}
       <div className="p-4 flex items-center justify-between z-20">
         <button onClick={onClose} className="p-3 bg-white/5 hover:bg-white/10 rounded-2xl active:scale-90 transition">
@@ -181,25 +199,33 @@ export function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps) {
         ) : <div className="w-12" />}
       </div>
 
-      {/* Viewfinder Siêu rộng */}
+      {/* Viewfinder Siêu rộng - Duy nhất một khung */}
       <div className="relative flex-1 flex flex-col items-center justify-center -mt-10">
-        <div className="w-full max-w-sm px-6">
-          <div className="relative aspect-square rounded-[3rem] overflow-hidden border-2 border-white/10 bg-black shadow-[0_0_80px_rgba(0,0,0,0.8)]">
+        <div className="w-full max-w-sm px-4">
+          <div className="relative aspect-square rounded-[3.5rem] overflow-hidden border border-white/10 bg-black shadow-[0_0_100px_rgba(0,0,0,0.9)]">
             <div id="reader" className="w-full h-full scale-110" />
             
-            {/* Overlay tập trung - Cực kỳ nhạy - KHUNG RỘNG */}
+            {/* Overlay Độc Bản - Khung cực rộng khớp với ảnh người dùng yêu cầu */}
             <div className="absolute inset-0 pointer-events-none flex items-center justify-center p-4">
-              <div className="relative w-full h-[75%] border-2 border-emerald-500/30 rounded-[2.5rem] shadow-[0_0_0_9999px_rgba(15,23,42,0.85)]">
-                {/* 4 Corners Focus - Đậm và Lớn hơn */}
-                <div className="absolute top-0 left-0 w-12 h-12 border-t-4 border-l-4 border-emerald-400 rounded-tl-[2rem] shadow-[0_0_20px_rgba(52,211,153,0.3)]" />
-                <div className="absolute top-0 right-0 w-12 h-12 border-t-4 border-r-4 border-emerald-400 rounded-tr-[2rem] shadow-[0_0_20px_rgba(52,211,153,0.3)]" />
-                <div className="absolute bottom-0 left-0 w-12 h-12 border-b-4 border-l-4 border-emerald-400 rounded-bl-[2rem] shadow-[0_0_20px_rgba(52,211,153,0.3)]" />
-                <div className="absolute bottom-0 right-0 w-12 h-12 border-b-4 border-r-4 border-emerald-400 rounded-br-[2rem] shadow-[0_0_20px_rgba(52,211,153,0.3)]" />
+              <div className="relative w-full h-[80%] border-[1.5px] border-emerald-500/20 rounded-[3rem] shadow-[0_0_0_9999px_rgba(15,23,42,0.85)] pulse-emerald">
+                {/* 4 Corners Focus - Đẳng cấp */}
+                <div className="absolute top-0 left-0 w-16 h-16 border-t-[5px] border-l-[5px] border-emerald-400 rounded-tl-[3rem] shadow-[0_0_25px_rgba(52,211,153,0.5)]" />
+                <div className="absolute top-0 right-0 w-16 h-16 border-t-[5px] border-r-[5px] border-emerald-400 rounded-tr-[3rem] shadow-[0_0_25px_rgba(52,211,153,0.5)]" />
+                <div className="absolute bottom-0 left-0 w-16 h-16 border-b-[5px] border-l-[5px] border-emerald-400 rounded-bl-[3rem] shadow-[0_0_25px_rgba(52,211,153,0.5)]" />
+                <div className="absolute bottom-0 right-0 w-16 h-16 border-b-[5px] border-r-[5px] border-emerald-400 rounded-br-[3rem] shadow-[0_0_25px_rgba(52,211,153,0.5)]" />
                 
                 {/* Visual Guide center */}
-                <div className="absolute inset-0 flex items-center justify-center opacity-30">
-                    <div className="w-full h-px bg-emerald-400/50" />
-                    <div className="h-full w-px bg-emerald-400/50 absolute" />
+                <div className="absolute inset-0 flex items-center justify-center opacity-40">
+                    <div className="w-full h-[1px] bg-emerald-400/30" />
+                    <div className="h-full w-[1px] bg-emerald-400/30 absolute" />
+                    <div className="w-6 h-6 border border-emerald-400/30 rounded-full" />
+                </div>
+
+                {/* Status Text */}
+                <div className="absolute top-6 left-0 right-0 text-center">
+                    <span className="text-[10px] text-emerald-400 font-bold tracking-[0.2em] bg-emerald-950/60 px-4 py-1.5 rounded-full border border-emerald-500/20 uppercase backdrop-blur-md">
+                        Aligning Target
+                    </span>
                 </div>
               </div>
             </div>
