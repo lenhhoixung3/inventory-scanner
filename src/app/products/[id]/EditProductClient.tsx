@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { updateProduct, deleteProduct } from './actions'
+import { canDeleteProducts, Role } from '@/lib/auth-utils'
 
 interface Product {
   id: string
@@ -14,7 +15,7 @@ interface Product {
   allowDuplicate: boolean
 }
 
-export default function EditProductClient({ product }: { product: Product }) {
+export default function EditProductClient({ product, currentRole }: { product: Product, currentRole: Role }) {
   const router = useRouter()
   const [form, setForm] = useState({
     name: product.name,
@@ -148,37 +149,39 @@ export default function EditProductClient({ product }: { product: Product }) {
       </form>
 
       {/* Xóa sản phẩm (ADMIN only) */}
-      <div className="mt-8 pt-6 border-t border-gray-100">
-        <p className="text-xs text-gray-400 mb-3 uppercase tracking-wide">Vùng nguy hiểm</p>
-        {!showDeleteConfirm ? (
-          <button
-            onClick={() => setShowDeleteConfirm(true)}
-            className="w-full py-3 bg-red-50 text-red-600 rounded-xl font-semibold text-sm active:scale-95 transition-all"
-          >
-            🗑 Xóa sản phẩm
-          </button>
-        ) : (
-          <div className="p-4 bg-red-50 rounded-xl space-y-3">
-            <p className="text-red-700 text-sm font-semibold">Bạn chắc chắn muốn xóa sản phẩm này?</p>
-            <p className="text-red-500 text-xs">Hành động này không thể hoàn tác. Tất cả lịch sử giao dịch cũng sẽ bị xóa.</p>
-            <div className="flex gap-2">
-              <button
-                onClick={() => setShowDeleteConfirm(false)}
-                className="flex-1 py-2 bg-gray-100 text-gray-700 rounded-xl text-sm"
-              >
-                Hủy
-              </button>
-              <button
-                onClick={handleDelete}
-                disabled={deleting}
-                className="flex-1 py-2 bg-red-600 text-white rounded-xl text-sm font-semibold disabled:opacity-50"
-              >
-                {deleting ? 'Đang xóa...' : 'Xác nhận xóa'}
-              </button>
+      {canDeleteProducts(currentRole) && (
+        <div className="mt-8 pt-6 border-t border-gray-100">
+            <p className="text-xs text-gray-400 mb-3 uppercase tracking-wide">Vùng nguy hiểm</p>
+            {!showDeleteConfirm ? (
+            <button
+                onClick={() => setShowDeleteConfirm(true)}
+                className="w-full py-3 bg-red-50 text-red-600 rounded-xl font-semibold text-sm active:scale-90 transition-all"
+            >
+                🗑 Xóa sản phẩm
+            </button>
+            ) : (
+            <div className="p-4 bg-red-50 rounded-xl space-y-3">
+                <p className="text-red-700 text-sm font-semibold">Bạn chắc chắn muốn xóa sản phẩm này?</p>
+                <p className="text-red-500 text-xs">Hành động này không thể hoàn tác. Tất cả lịch sử giao dịch cũng sẽ bị xóa.</p>
+                <div className="flex gap-2">
+                <button
+                    onClick={() => setShowDeleteConfirm(false)}
+                    className="flex-1 py-2 bg-gray-100 text-gray-700 rounded-xl text-sm"
+                >
+                    Hủy
+                </button>
+                <button
+                    onClick={handleDelete}
+                    disabled={deleting}
+                    className="flex-1 py-2 bg-red-600 text-white rounded-xl text-sm font-semibold disabled:opacity-50"
+                >
+                    {deleting ? 'Đang xóa...' : 'Xác nhận xóa'}
+                </button>
+                </div>
             </div>
-          </div>
-        )}
-      </div>
+            )}
+        </div>
+      )}
     </div>
   )
 }

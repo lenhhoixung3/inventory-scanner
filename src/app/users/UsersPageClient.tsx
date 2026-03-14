@@ -3,8 +3,9 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { logout, approveUser } from '@/lib/auth-actions'
-import { deleteUser } from './actions'
+import { deleteUser, updateUserPermissions } from './actions'
 import { UserCheck, Trash2, LogOut, Shield, Mail, Phone, Lock, ChevronDown, ChevronUp } from 'lucide-react'
+import { clsx } from 'clsx'
 
 interface User {
   id: string
@@ -13,6 +14,11 @@ interface User {
   phone?: string | null
   role: string
   status: string
+  canInbound: boolean
+  canOutbound: boolean
+  canManageProducts: boolean
+  canDeleteProducts: boolean
+  canManageUsers: boolean
   createdAt: Date
 }
 
@@ -65,6 +71,14 @@ export default function UsersPageClient({ users, currentUserId }: { users: User[
     if (!confirm(`Xóa tài khoản "${name}"?`)) return
     try {
       await deleteUser(id)
+      router.refresh()
+    } catch (err: any) {
+      setError(err.message)
+    }
+  }
+  const handleTogglePerm = async (id: string, key: string, val: boolean) => {
+    try {
+      await updateUserPermissions(id, { [key]: val })
       router.refresh()
     } catch (err: any) {
       setError(err.message)
@@ -153,65 +167,70 @@ export default function UsersPageClient({ users, currentUserId }: { users: User[
           <Shield size={20} />
           Nhân viên chính thức
         </h2>
-        <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
-          {approvedUsers.map((u, idx) => (
-            <div key={u.id} className={`flex items-center justify-between p-4 ${idx !== approvedUsers.length - 1 ? 'border-b border-slate-100' : ''}`}>
-              <div className="flex items-center gap-3">
-                <div className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${ROLE_COLORS[u.role] || ROLE_COLORS.VIEWER}`}>
-                  {ROLE_LABELS[u.role] || u.role}
+        <div className="space-y-4">
+          {approvedUsers.map((u) => (
+            <div key={u.id} className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+              {/* Header: Info & Role */}
+              <div className="p-4 flex items-center justify-between bg-slate-50/50 border-b border-slate-100">
+                <div className="flex items-center gap-3">
+                  <div className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${ROLE_COLORS[u.role] || ROLE_COLORS.VIEWER}`}>
+                    {ROLE_LABELS[u.role] || u.role}
+                  </div>
+                  <div>
+                    <p className="font-bold text-slate-900">{u.name}</p>
+                    <p className="text-xs text-slate-400">{u.email}</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="font-bold text-slate-900">{u.name}</p>
-                  <p className="text-xs text-slate-400">{u.email}</p>
+                <div className="flex items-center gap-2">
+                  {u.id === currentUserId && <span className="text-[10px] bg-blue-50 text-blue-600 px-2 py-1 rounded-lg font-bold">LÀ BẠN</span>}
+                  {u.id !== currentUserId && (
+                    <button 
+                      onClick={() => handleDelete(u.id, u.name)}
+                      className="p-2 text-slate-300 hover:text-red-500 rounded-lg transition"
+                    >
+                      <Trash2 size={18} />
+                    </button>
+                  )}
                 </div>
               </div>
-              <div className="flex items-center gap-2">
-                {u.id === currentUserId && <span className="text-[10px] bg-blue-50 text-blue-600 px-2 py-1 rounded-lg font-bold">LÀ BẠN</span>}
-                {u.id !== currentUserId && (
-                  <button 
-                    onClick={() => handleDelete(u.id, u.name)}
-                    className="p-2 text-slate-300 hover:text-red-500 rounded-lg transition"
-                  >
-                    <Trash2 size={18} />
-                  </button>
-                )}
+
+              {/* Permissions Grid */}
+              <div className="p-4 grid grid-cols-2 sm:grid-cols-3 gap-3">
+                 {[
+                   { key: 'canInbound', label: 'Nhập kho' },
+                   { key: 'canOutbound', label: 'Xuất kho' },
+                   { key: 'canManageProducts', label: 'Sửa SP' },
+                   { key: 'canDeleteProducts', label: 'Xóa SP' },
+                   { key: 'canManageUsers', label: 'Quản lý User' },
+                 ].map((p) => (
+                   <label 
+                     key={p.key} 
+                     className={clsx(
+                       "flex items-center gap-2 p-2 rounded-xl text-xs font-medium cursor-pointer transition-all border",
+                       (u as any)[p.key] ? "bg-blue-50 border-blue-100 text-blue-700" : "bg-gray-50 border-gray-100 text-gray-500"
+                     )}
+                   >
+                     <input 
+                       type="checkbox"
+                       className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 border-gray-300"
+                       checked={(u as any)[p.key]}
+                       onChange={(e) => handleTogglePerm(u.id, p.key, e.target.checked)}
+                       disabled={u.role === 'ADMIN' && p.key === 'canManageUsers'} // Không cho tự gỡ quyền Admin nếu cần bảo vệ
+                     />
+                     {p.label}
+                   </label>
+                 ))}
               </div>
             </div>
           ))}
         </div>
       </section>
 
-      {/* Bảng phân quyền */}
-      <section className="bg-slate-50 rounded-2xl p-4 border border-slate-100">
-        <h3 className="text-sm font-bold text-slate-700 mb-3 uppercase tracking-wider">Thông tin quyền hạn</h3>
-        <div className="overflow-x-auto">
-          <table className="w-full text-xs text-slate-600">
-            <thead>
-              <tr className="text-left border-b border-slate-200">
-                <th className="pb-2">Tính năng</th>
-                <th className="pb-2 text-center">Xem</th>
-                <th className="pb-2 text-center">Quản lý</th>
-                <th className="pb-2 text-center">Admin</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {[
-                ['Nhập / Xuất kho', true, true, true],
-                ['Xem báo cáo', true, true, true],
-                ['Sửa sản phẩm', false, true, true],
-                ['Xóa sản phẩm', false, false, true],
-                ['Quản lý tài khoản', false, false, true],
-              ].map(([label, v, m, a], i) => (
-                <tr key={i}>
-                  <td className="py-2.5 font-medium">{label as string}</td>
-                  <td className="text-center">{v ? '✅' : '❌'}</td>
-                  <td className="text-center">{m ? '✅' : '❌'}</td>
-                  <td className="text-center">{a ? '✅' : '❌'}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+      {/* Bảng phân quyền Legend */}
+      <section className="bg-slate-50 rounded-2xl p-4 border border-slate-100 italic">
+        <p className="text-[10px] text-slate-500 text-center">
+          * Admin luôn có toàn quyền. Manager/Viewer cần được tích chọn để kích hoạt quyền tương ứng.
+        </p>
       </section>
     </div>
   )

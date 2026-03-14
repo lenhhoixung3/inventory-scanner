@@ -10,6 +10,12 @@ export interface SessionUser {
   email: string
   role: Role
   status: UserStatus
+  // Quyền hạn chi tiết
+  canInbound: boolean
+  canOutbound: boolean
+  canManageProducts: boolean
+  canDeleteProducts: boolean
+  canManageUsers: boolean
 }
 
 /** Lấy thông tin người dùng hiện tại từ cookie session */
@@ -25,7 +31,12 @@ export async function getCurrentUser(): Promise<SessionUser | null> {
       name: user.name, 
       email: user.email,
       role: user.role as Role,
-      status: user.status as UserStatus
+      status: user.status as UserStatus,
+      canInbound: user.canInbound,
+      canOutbound: user.canOutbound,
+      canManageProducts: user.canManageProducts,
+      canDeleteProducts: user.canDeleteProducts,
+      canManageUsers: user.canManageUsers
     }
   } catch {
     return null
@@ -43,9 +54,14 @@ export async function ensureDefaultAdmin() {
         data: { 
           name: 'Admin', 
           email: 'admin@wms.com',
-          password: 'admin123', // Admin đầu tiên khởi tạo bằng tay hoặc env
+          password: 'admin123', 
           role: 'ADMIN',
-          status: 'APPROVED'
+          status: 'APPROVED',
+          canInbound: true,
+          canOutbound: true,
+          canManageProducts: true,
+          canDeleteProducts: true,
+          canManageUsers: true
         }
       })
     }

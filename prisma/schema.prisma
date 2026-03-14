@@ -15,6 +15,12 @@ model User {
   password  String?  // Sẽ được Admin cấp khi duyệt
   role      String   @default("VIEWER") // ADMIN | MANAGER | VIEWER
   status    String   @default("PENDING") // PENDING | APPROVED
+  // Quyền hạn chi tiết
+  canInbound        Boolean @default(false)
+  canOutbound       Boolean @default(false)
+  canManageProducts Boolean @default(false)
+  canDeleteProducts Boolean @default(false)
+  canManageUsers    Boolean @default(false)
   createdAt DateTime @default(now())
 }
 

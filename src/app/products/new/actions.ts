@@ -2,12 +2,12 @@
 import prisma from '@/lib/prisma'
 import { revalidatePath } from 'next/cache'
 import { getCurrentUser } from '@/lib/auth'
-import { canManageUsers } from '@/lib/auth-utils'
+import { canManageUsers, canDeleteProducts, canInbound, canOutbound } from '@/lib/auth-utils'
 
 export async function createUser(data: { name: string; pin: string; role: string }) {
   const user = await getCurrentUser()
-  if (!user || !canManageUsers(user.role)) {
-    throw new Error('Chỉ Admin mới có thể tạo tài khoản.')
+  if (!user || !canManageUsers(user)) {
+    throw new Error('Bạn không có quyền quản lý tài khoản.')
   }
   const existing = await (prisma as any).user.findFirst({ where: { pin: data.pin } })
   if (existing) throw new Error('Mã PIN này đã được sử dụng.')
@@ -16,7 +16,7 @@ export async function createUser(data: { name: string; pin: string; role: string
 
 export async function deleteUser(id: string) {
   const user = await getCurrentUser()
-  if (!user || user.role !== 'ADMIN') throw new Error('Không có quyền.')
+  if (!user || !user.canManageUsers) throw new Error('Không có quyền.')
   if (user.id === id) throw new Error('Không thể xóa chính mình.')
   await (prisma as any).user.delete({ where: { id } })
   revalidatePath('/users')
@@ -34,11 +34,11 @@ export async function createProduct(data: {
   // Chặn nếu: (SP mới không cho phép trùng) HOẶC (Tìm thấy ít nhất 1 SP cùng mã không cho phép trùng)
   const isDuplicateAllowedForNew = data.allowDuplicate ?? false
 
-  const conflictingProduct = await prisma.product.findFirst({
+  const conflictingProduct = await (prisma as any).product.findFirst({
     where: { 
       barcode: data.barcode,
       OR: [
-        { allowDuplicate: false }, // Có sản phẩm cũ không cho trùng
+        { allowDuplicate: false },
       ]
     }
   })
@@ -47,11 +47,11 @@ export async function createProduct(data: {
     throw new Error('Mã vạch này đã tồn tại và không được phép trùng lặp.')
   }
   
-  if (isDuplicateAllowedForNew && conflictingProduct && !conflictingProduct.allowDuplicate) {
+  if (isDuplicateAllowedForNew && conflictingProduct && !(conflictingProduct as any).allowDuplicate) {
     throw new Error(`Sản phẩm '${conflictingProduct.name}' đang dùng mã này và yêu cầu DUY NHẤT. Bạn không thể nhập trùng.`)
   }
 
-  const product = await prisma.product.create({ data: {
+  const product = await (prisma as any).product.create({ data: {
     name: data.name,
     barcode: data.barcode,
     price: data.price,
@@ -72,6 +72,11 @@ export async function createProduct(data: {
 }
 
 export async function processTransaction(barcode: string, type: 'IN' | 'OUT', quantity: number, note: string) {
+  const user = await getCurrentUser()
+  if (!user) throw new Error('Cần đăng nhập.')
+  
+  if (type === 'IN' && !canInbound(user)) throw new Error('Bạn không có quyền Nhập kho.')
+  if (type === 'OUT' && !canOutbound(user)) throw new Error('Bạn không có quyền Xuất kho.')
   // Nếu trùng mã, ưu tiên lấy sản phẩm được cập nhật mới nhất
   const product = await prisma.product.findFirst({ 
     where: { barcode },

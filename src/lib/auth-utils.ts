@@ -4,16 +4,29 @@ export interface SessionUser {
   id: string
   name: string
   role: Role
+  canInbound: boolean
+  canOutbound: boolean
+  canManageProducts: boolean
+  canDeleteProducts: boolean
+  canManageUsers: boolean
 }
 
-export function canEditProducts(role: Role): boolean {
-  return role === 'ADMIN' || role === 'MANAGER'
+export function canInbound(user: SessionUser): boolean {
+  return user.canInbound || user.role === 'ADMIN'
 }
 
-export function canDeleteProducts(role: Role): boolean {
-  return role === 'ADMIN' // Chỉ Admin mới có thể xóa sản phẩm
+export function canOutbound(user: SessionUser): boolean {
+  return user.canOutbound || user.role === 'ADMIN'
 }
 
-export function canManageUsers(role: Role): boolean {
-  return role === 'ADMIN' // Chỉ Admin mới được quyền quản lý User (Duyệt/Xóa)
+export function canEditProducts(user: SessionUser): boolean {
+  return user.canManageProducts || user.role === 'ADMIN'
+}
+
+export function canDeleteProducts(user: SessionUser): boolean {
+  return user.canDeleteProducts || user.role === 'ADMIN'
+}
+
+export function canManageUsers(user: SessionUser): boolean {
+  return user.canManageUsers || user.role === 'ADMIN'
 }

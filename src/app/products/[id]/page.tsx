@@ -24,8 +24,8 @@ export default async function EditProductPage({ params }: { params: Promise<{ id
   }
 
   const { id } = await params
-  const product = await prisma.product.findUnique({ where: { id } })
+  const product = await (prisma as any).product.findUnique({ where: { id } })
   if (!product) notFound()
 
-  return <EditProductClient product={product} />
+  return <EditProductClient product={product} currentRole={user.role} />
 }

@@ -3,7 +3,7 @@
 import prisma from '@/lib/prisma'
 import { revalidatePath } from 'next/cache'
 import { getCurrentUser } from '@/lib/auth'
-import { canEditProducts } from '@/lib/auth-utils'
+import { canEditProducts, canDeleteProducts, canInbound, canOutbound } from '@/lib/auth-utils'
 
 export async function updateProduct(id: string, data: {
   name: string
@@ -13,13 +13,13 @@ export async function updateProduct(id: string, data: {
   allowDuplicate?: boolean
 }) {
   const user = await getCurrentUser()
-  if (!user || !canEditProducts(user.role)) {
+  if (!user || !canEditProducts(user)) {
     throw new Error('Bạn không có quyền chỉnh sửa sản phẩm.')
   }
 
   const isDuplicateAllowedForNew = data.allowDuplicate ?? false
 
-  const conflictingProduct = await prisma.product.findFirst({
+  const conflictingProduct = await (prisma as any).product.findFirst({
     where: { 
       barcode: data.barcode,
       NOT: { id },
@@ -36,7 +36,7 @@ export async function updateProduct(id: string, data: {
       if (anyExisting) throw new Error('Có sản phẩm khác đang dùng mã này. Bạn không thể thiết lập "Duy nhất" cho sản phẩm này.')
   }
 
-  const product = await prisma.product.update({
+  const product = await (prisma as any).product.update({
     where: { id },
     data: {
       name: data.name,
@@ -54,8 +54,8 @@ export async function updateProduct(id: string, data: {
 
 export async function deleteProduct(id: string) {
   const user = await getCurrentUser()
-  if (!user || user.role !== 'ADMIN') {
-    throw new Error('Chỉ Admin mới có thể xóa sản phẩm.')
+  if (!user || !canDeleteProducts(user)) {
+    throw new Error('Bạn không có quyền xóa sản phẩm.')
   }
 
   await prisma.product.delete({ where: { id } })

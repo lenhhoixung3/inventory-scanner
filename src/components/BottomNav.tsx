@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Home, Package, ArrowUpRight, ArrowDownLeft, Users, Settings } from 'lucide-react'
+import { Home, Package, ArrowUpRight, ArrowDownLeft, Users } from 'lucide-react'
 import { clsx } from 'clsx'
 
 const navItems = [
@@ -11,7 +11,6 @@ const navItems = [
   { name: 'Xuất kho', href: '/outbound', icon: ArrowUpRight },
   { name: 'Sản phẩm', href: '/products', icon: Package },
   { name: 'Quyền', href: '/users', icon: Users },
-  { name: 'Cài đặt', href: '/settings', icon: Settings },
 ]
 
 export function BottomNav() {
