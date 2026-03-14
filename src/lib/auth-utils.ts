@@ -1,15 +1,4 @@
-export type Role = 'ADMIN' | 'MANAGER' | 'VIEWER'
-
-export interface SessionUser {
-  id: string
-  name: string
-  role: Role
-  canInbound: boolean
-  canOutbound: boolean
-  canManageProducts: boolean
-  canDeleteProducts: boolean
-  canManageUsers: boolean
-}
+import { SessionUser } from './auth'
 
 export function canInbound(user: SessionUser): boolean {
   return user.canInbound || user.role === 'ADMIN'

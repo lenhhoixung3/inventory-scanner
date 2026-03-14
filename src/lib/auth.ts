@@ -66,5 +66,7 @@ export async function ensureDefaultAdmin() {
         }
       })
     }
-  } catch {}
+  } catch (error) {
+    console.error('Error in ensureDefaultAdmin:', error)
+  }
 }
