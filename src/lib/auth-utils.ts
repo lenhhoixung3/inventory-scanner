@@ -1,12 +1,9 @@
 export type Role = 'ADMIN' | 'MANAGER' | 'VIEWER'
-export type UserStatus = 'PENDING' | 'APPROVED'
 
 export interface SessionUser {
   id: string
   name: string
-  email: string
   role: Role
-  status: UserStatus
   canInbound: boolean
   canOutbound: boolean
   canManageProducts: boolean

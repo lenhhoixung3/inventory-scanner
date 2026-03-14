@@ -1,9 +1,10 @@
 'use client'
 
-import { useState, useEffect, FormEvent } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { updateProduct, deleteProduct } from './actions'
-import { canDeleteProducts, SessionUser } from '@/lib/auth-utils'
+import { canDeleteProducts } from '@/lib/auth-utils'
+import type { SessionUser } from '@/lib/auth'
 
 interface Product {
   id: string
@@ -15,7 +16,12 @@ interface Product {
   allowDuplicate: boolean
 }
 
-export default function EditProductClient({ product, currentUser }: { product: Product, currentUser: SessionUser }) {
+interface EditProductClientProps {
+  product: Product
+  currentUser: SessionUser
+}
+
+export default function EditProductClient({ product, currentUser }: EditProductClientProps) {
   const router = useRouter()
   const [form, setForm] = useState({
     name: product.name,
@@ -30,7 +36,7 @@ export default function EditProductClient({ product, currentUser }: { product: P
   const [deleting, setDeleting] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
 
-  const handleSave = async (e: FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault()
     setSaving(true)
     setError('')
@@ -148,7 +154,7 @@ export default function EditProductClient({ product, currentUser }: { product: P
         </button>
       </form>
 
-      {/* Xóa sản phẩm (ADMIN only) */}
+      {/* Xóa sản phẩm (ADMIN or with permission) */}
       {canDeleteProducts(currentUser) && (
         <div className="mt-8 pt-6 border-t border-gray-100">
             <p className="text-xs text-gray-400 mb-3 uppercase tracking-wide">Vùng nguy hiểm</p>

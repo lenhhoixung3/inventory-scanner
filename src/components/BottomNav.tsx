@@ -28,7 +28,7 @@ export function BottomNav() {
               href={item.href}
               className={clsx(
                 "inline-flex flex-col items-center justify-center px-1 md:px-5 hover:bg-gray-50",
-                isActive ? "text-blue-600" : "text-gray-500"
+                isActive ? "text-blue-500" : "text-gray-500"
               )}
             >
               <Icon className="w-6 h-6 mb-1" />

@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { logout, approveUser } from '@/lib/auth-actions'
-import { deleteUser, updateUserPermissions } from './actions'
+import { deleteUser, updateUserPermissions, updateUserRole } from './actions'
 import { UserCheck, Trash2, LogOut, Shield, Mail, Phone, Lock, ChevronDown, ChevronUp } from 'lucide-react'
 import { clsx } from 'clsx'
 
@@ -79,6 +79,15 @@ export default function UsersPageClient({ users, currentUserId }: { users: User[
   const handleTogglePerm = async (id: string, key: string, val: boolean) => {
     try {
       await updateUserPermissions(id, { [key]: val })
+      router.refresh()
+    } catch (err: any) {
+      setError(err.message)
+    }
+  }
+
+  const handleChangeRole = async (id: string, role: string) => {
+    try {
+      await updateUserRole(id, role)
       router.refresh()
     } catch (err: any) {
       setError(err.message)
@@ -172,15 +181,21 @@ export default function UsersPageClient({ users, currentUserId }: { users: User[
             <div key={u.id} className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
               {/* Header: Info & Role */}
               <div className="p-4 flex items-center justify-between bg-slate-50/50 border-b border-slate-100">
-                <div className="flex items-center gap-3">
-                  <div className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${ROLE_COLORS[u.role] || ROLE_COLORS.VIEWER}`}>
-                    {ROLE_LABELS[u.role] || u.role}
-                  </div>
                   <div>
-                    <p className="font-bold text-slate-900">{u.name}</p>
+                    <div className="flex items-center gap-2 mb-1">
+                      <p className="font-bold text-slate-900">{u.name}</p>
+                      <select 
+                        value={u.role}
+                        onChange={(e) => handleChangeRole(u.id, e.target.value)}
+                        className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full border-none focus:ring-2 focus:ring-blue-500 appearance-none cursor-pointer ${ROLE_COLORS[u.role] || ROLE_COLORS.VIEWER}`}
+                      >
+                        {Object.entries(ROLE_LABELS).map(([val, label]) => (
+                          <option key={val} value={val}>{label}</option>
+                        ))}
+                      </select>
+                    </div>
                     <p className="text-xs text-slate-400">{u.email}</p>
                   </div>
-                </div>
                 <div className="flex items-center gap-2">
                   {u.id === currentUserId && <span className="text-[10px] bg-blue-50 text-blue-600 px-2 py-1 rounded-lg font-bold">LÀ BẠN</span>}
                   {u.id !== currentUserId && (
