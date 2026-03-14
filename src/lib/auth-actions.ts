@@ -5,9 +5,14 @@ import prisma from '@/lib/prisma'
 import { revalidatePath } from 'next/cache'
 import type { Role } from './auth'
 
+import { ensureDefaultAdmin } from './auth'
+
 /** Đăng nhập */
 export async function login(email: string, password: string): Promise<{ success: boolean; error?: string }> {
   try {
+    // Đảm bảo có tài khoản Admin mặc định trước khi kiểm tra đăng nhập
+    await ensureDefaultAdmin()
+
     const user = await (prisma as any).user.findUnique({ where: { email } })
     if (!user) return { success: false, error: 'Tên đăng nhập hoặc mật khẩu không đúng.' }
     
@@ -22,8 +27,9 @@ export async function login(email: string, password: string): Promise<{ success:
     const cookieStore = await cookies()
     cookieStore.set('wms_user_id', user.id, { path: '/', maxAge: 60 * 60 * 24 * 7 })
     return { success: true }
-  } catch {
-    return { success: false, error: 'Lỗi kết nối server.' }
+  } catch (e: any) {
+    console.error('Login error:', e)
+    return { success: false, error: `Lỗi kết nối server: ${e.message || 'Unknown error'}` }
   }
 }
 
